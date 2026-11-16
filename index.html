@@ -2,266 +2,93 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000">
 <title>Borderlands 2 Camera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #000;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    overflow: hidden;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  #app {
-    flex: 1;
-    position: relative;
-    background: #111;
-  }
-  video, canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  canvas {
-    pointer-events: none;
-  }
-  .controls {
-    height: 120px;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 20px;
-    border-top: 1px solid #333;
-  }
-  button {
-    background: #222;
-    border: 2px solid #ff3b30;
-    color: #fff;
-    border-radius: 50%;
-    width: 70px;
-    height: 70px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-  button:active { transform: scale(0.95); }
-  button.record {
-    width: 80px;
-    height: 80px;
-    background: #ff3b30;
-    border-color: #fff;
-  }
-  button.record.recording {
-    background: #ff9500;
-    animation: pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-  .status {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    z-index: 10;
-  }
-  .style-label {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #e74c3c;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 12px;
-    z-index: 10;
-    letter-spacing: 1px;
-  }
+  :root { --y: #f7b500; --o: #ff7a00; --ink: #0d0a08; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: #000; color: #fff; overflow: hidden; font-family: 'Bangers', Impact, sans-serif; letter-spacing: 1px; }
+  body { display: flex; flex-direction: column; height: 100dvh; }
+  #app { flex: 1; position: relative; min-height: 0; background: #0b0905; }
+  #canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  #video { position: absolute; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
+  /* narożne klamry */
+  .br { position: absolute; width: 34px; height: 34px; border: 4px solid var(--y); filter: drop-shadow(2px 2px 0 var(--ink)); pointer-events: none; z-index: 5; }
+  .br.tl { top: calc(10px + env(safe-area-inset-top)); left: 10px; border-right: 0; border-bottom: 0; }
+  .br.tr { top: calc(10px + env(safe-area-inset-top)); right: 10px; border-left: 0; border-bottom: 0; }
+  .br.bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+  .br.brr { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+  #status { position: absolute; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%) skewX(-12deg); z-index: 6;
+    background: var(--y); color: var(--ink); padding: 6px 16px; font-size: 20px; border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+    transition: opacity .5s; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  .controls { flex: none; display: flex; align-items: center; justify-content: space-around; padding: 12px 10px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(#1b1408, #0b0905); border-top: 4px solid var(--y); }
+  .btn { font-family: inherit; font-size: 20px; color: var(--ink); background: var(--y); border: 3px solid var(--ink); width: 64px; height: 56px;
+    clip-path: polygon(14% 0, 100% 0, 86% 100%, 0 100%); box-shadow: inset 0 -6px 0 rgba(0,0,0,.25); cursor: pointer; }
+  .btn:active { transform: scale(.94); background: var(--o); }
+  .btn.big { width: 96px; height: 70px; font-size: 30px; background: #e8322a; color: #fff; text-shadow: 2px 2px 0 var(--ink); }
+  .btn.big.on { background: var(--o); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.4); } }
+  /* menu w stylu pauzy BL2 */
+  .panel { position: fixed; inset: 0; z-index: 20; background: rgba(5,10,14,.82); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .panel[hidden] { display: none; }
+  .box { width: min(440px, 100%); max-height: 88dvh; overflow: auto; background: linear-gradient(160deg, rgba(20,40,52,.95), rgba(8,16,22,.97));
+    border: 3px solid var(--y); box-shadow: 0 0 0 3px var(--ink), 8px 8px 0 var(--ink); padding: 14px; clip-path: polygon(0 0, 94% 0, 100% 5%, 100% 100%, 6% 100%, 0 95%); }
+  .box h2 { font-weight: 400; font-size: 40px; color: var(--y); text-shadow: 3px 3px 0 var(--ink); margin: 0 0 10px 6px; transform: skewX(-8deg); }
+  .row { display: flex; width: 100%; align-items: center; justify-content: space-between; font-family: inherit; font-size: 22px; letter-spacing: 1px;
+    color: #cfe7f2; background: rgba(255,255,255,.04); border: 0; border-left: 5px solid transparent; padding: 10px 12px; margin: 4px 0; text-align: left; cursor: pointer; }
+  .row:active, .row:hover { background: rgba(247,181,0,.18); border-left-color: var(--y); color: #fff; }
+  .row b { font-weight: 400; color: var(--y); min-width: 70px; text-align: right; }
+  .row input { accent-color: var(--y); width: 45%; }
+  .pbtns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+  .pbtns .btn { width: auto; padding: 0 22px; height: 50px; font-size: 22px; display: inline-flex; align-items: center; text-decoration: none; }
+  #sheetMedia img, #sheetMedia video { width: 100%; max-height: 60dvh; object-fit: contain; display: block; border: 3px solid var(--ink); background: #000; }
+  .foot { font-family: -apple-system, sans-serif; letter-spacing: 0; font-size: 11px; color: #8aa; margin-top: 10px; }
+  body.raw .controls, body.raw .br, body.raw #status { display: none !important; }
+  body.raw #canvas { object-fit: fill; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="style-label">BORDERLANDS 2</div>
-  <div class="status" id="status">Ładowanie kamery...</div>
-  <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
+  <video id="video" autoplay playsinline muted></video>
+  <div class="br tl"></div><div class="br tr"></div><div class="br bl"></div><div class="br brr"></div>
+  <div id="status">ŁADOWANIE KAMERY...</div>
 </div>
 <div class="controls">
-  <button id="switchCam">📷</button>
-  <button id="recordBtn" class="record">REC</button>
-  <button id="snapshot">📸</button>
+  <button class="btn" id="gear" aria-label="Ustawienia">⚙</button>
+  <button class="btn" id="flip" aria-label="Zmień kamerę">⟲</button>
+  <button class="btn big" id="rec">REC</button>
+  <button class="btn" id="snap" aria-label="Zdjęcie">📸</button>
 </div>
 
-<script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const statusEl = document.getElementById('status');
-const recordBtn = document.getElementById('recordBtn');
-const switchBtn = document.getElementById('switchCam');
-const snapBtn = document.getElementById('snapshot');
+<div class="panel" id="menu" hidden>
+  <div class="box">
+    <h2>OPCJE</h2>
+    <div id="menuList"></div>
+    <div class="pbtns"><button class="btn" id="menuClose">WRÓĆ</button></div>
+    <div class="foot">Fanowski filtr, niezwiązany z Gearbox / 2K. Wszystko narysowane od zera.</div>
+  </div>
+</div>
 
-let stream = null;
-let facingMode = 'environment';
-let mediaRecorder = null;
-let recordedChunks = [];
-let isRecording = false;
+<div class="panel" id="sheet" hidden>
+  <div class="box">
+    <h2>ŁUP!</h2>
+    <div id="sheetMedia"></div>
+    <div class="pbtns">
+      <button class="btn" id="sheetClose">ZAMKNIJ</button>
+      <a class="btn" id="sheetDl" href="#">POBIERZ</a>
+      <button class="btn" id="sheetShare">ZAPISZ</button>
+    </div>
+  </div>
+</div>
 
-async function startCamera() {
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-  }
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: facingMode,
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
-    video.srcObject = stream;
-    await video.play();
-    statusEl.textContent = 'Gotowe \u2022 Styl Borderlands 2';
-    resizeCanvas();
-    processFrame();
-  } catch (err) {
-    statusEl.textContent = 'B\u0142\u0105d kamery: ' + err.message;
-    console.error(err);
-  }
-}
-
-function resizeCanvas() {
-  canvas.width = video.videoWidth || window.innerWidth;
-  canvas.height = video.videoHeight || window.innerHeight;
-}
-
-window.addEventListener('resize', resizeCanvas);
-
-function quantize(value, levels = 6) {
-  const step = 255 / (levels - 1);
-  return Math.round(value / step) * step;
-}
-
-function processFrame() {
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const w = canvas.width;
-    const h = canvas.height;
-
-    for (let i = 0; i < data.length; i += 4) {
-      data[i]     = quantize(data[i] * 1.15, 5);
-      data[i + 1] = quantize(data[i + 1] * 1.1, 5);
-      data[i + 2] = quantize(data[i + 2] * 1.2, 5);
-    }
-
-    const edges = new Uint8ClampedArray(data.length);
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const idx = (y * w + x) * 4;
-        const left = (y * w + (x - 1)) * 4;
-        const right = (y * w + (x + 1)) * 4;
-        const up = ((y - 1) * w + x) * 4;
-        const down = ((y + 1) * w + x) * 4;
-
-        const dx = Math.abs(data[idx] - data[left]) + Math.abs(data[idx] - data[right]);
-        const dy = Math.abs(data[idx] - data[up]) + Math.abs(data[idx] - data[down]);
-        const edge = Math.min(255, (dx + dy) * 0.8);
-
-        if (edge > 40) {
-          edges[idx] = edges[idx + 1] = edges[idx + 2] = 0;
-          edges[idx + 3] = 255;
-        }
-      }
-    }
-
-    for (let i = 0; i < data.length; i += 4) {
-      if (edges[i + 3] === 255) {
-        data[i] = data[i + 1] = data[i + 2] = 0;
-      }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-  }
-  requestAnimationFrame(processFrame);
-}
-
-recordBtn.addEventListener('click', () => {
-  if (!isRecording) {
-    startRecording();
-  } else {
-    stopRecording();
-  }
-});
-
-function startRecording() {
-  const canvasStream = canvas.captureStream(30);
-  recordedChunks = [];
-  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm';
-  mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mime });
-  mediaRecorder.ondataavailable = e => {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  };
-  mediaRecorder.onstop = () => {
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `borderlands2-camera-${Date.now()}.webm`;
-    a.click();
-    URL.revokeObjectURL(url);
-    statusEl.textContent = 'Nagranie zapisane!';
-  };
-  mediaRecorder.start();
-  isRecording = true;
-  recordBtn.classList.add('recording');
-  recordBtn.textContent = 'STOP';
-  statusEl.textContent = 'Nagrywanie...';
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
-  isRecording = false;
-  recordBtn.classList.remove('recording');
-  recordBtn.textContent = 'REC';
-}
-
-snapBtn.addEventListener('click', () => {
-  const link = document.createElement('a');
-  link.download = `borderlands2-snap-${Date.now()}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  statusEl.textContent = 'Zrzut zapisany!';
-});
-
-switchBtn.addEventListener('click', () => {
-  facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  startCamera();
-});
-
-startCamera();
-</script>
+<script src="js/art.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
